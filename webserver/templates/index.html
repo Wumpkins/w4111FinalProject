@@ -17,11 +17,9 @@
   <button type='submit'>Search</button>
   </form>
 
-  <div>{{data}}</div>
-
   <div>
     {% for n in data %}
-    <div>{{n}}</div>
+    <div><a href="/recipePage/{{n}}">{{n}}</a></div>
     {% endfor %}
   </div>
 
