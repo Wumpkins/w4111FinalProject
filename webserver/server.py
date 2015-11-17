@@ -78,7 +78,18 @@ def index():
 
   print request.args
 
-  cursor = g.conn.execute("SELECT * FROM recipes;")
+  searchVal = request.args.get('searchVal')
+  if searchVal is not None:
+    sql = """
+      SELECT * 
+      FROM recipes r 
+      WHERE r.name 
+      LIKE '%%'||%s||'%%'
+      """
+    print sql % searchVal
+    cursor = g.conn.execute(sql, (searchVal))
+  else:
+    cursor = g.conn.execute("SELECT * FROM recipes")
 
   recipes = []
   for result in cursor:
@@ -97,20 +108,7 @@ def index():
   # for example, "data" key in the context variable defined below will be 
   # accessible as a variable in index.html:
   #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
+
   context = dict( data = recipes )
 
 
@@ -127,18 +125,6 @@ def test():
 @app.route('/test2/', methods =["POST", "GET"])
 def test2():
   return render_template("test.html")
-
-#
-# This is an example of a different path.  You can see it at
-# 
-#     localhost:8111/another/
-#
-# notice that the functio name is another() rather than index()
-# the functions for each app.route needs to have different names
-#
-@app.route('/another/', methods=["POST", "GET"])
-def another():
-  return render_template("anotherfile.html")
 
 if __name__ == "__main__":
   import click
