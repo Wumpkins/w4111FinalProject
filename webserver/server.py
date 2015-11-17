@@ -2,19 +2,9 @@
 
 """
 Columbia W4111 Intro to databases
-Example webserver
 
-To run locally
-
-    python server.py
-
-Go to http://localhost:8111 in your browser
-
-
-A debugger such as "pdb" may be helpful for debugging.
-Read about it online.
-
-eugene wu 2015
+David Chen (dhc2129)
+Lusa Zhan (lz2371)
 """
 
 import os
