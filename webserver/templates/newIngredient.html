@@ -1,0 +1,18 @@
+{% include 'header.html' %}
+	{%if not session.logged_in %}
+		Please login first
+    {% else %}
+		<form method="post" action="{{ url_for('newIngredient') }}">
+			Name: <input name ='name' type='text'><br><br>
+			Unit Type: <select name = 'unit'>
+				<option value ='ct'>ct</option>
+				<option value ='lb'>lb</option>
+				<option value ='l'>l</option>
+			</select>
+			Price (for one unit): <input name ='price' type='number'><br><br>
+			Description: <textarea name = 'description' rows="4" cols="50" placeholder='Enter description here'></textarea><br><br>
+
+			<button type = 'submit'>Submit</button>
+		</form>
+	{%endif%}
+{% include 'footer.html' %}

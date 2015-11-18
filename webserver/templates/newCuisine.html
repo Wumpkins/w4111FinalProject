@@ -1,0 +1,12 @@
+{% include 'header.html' %}
+	{%if not session.logged_in %}
+		Please login first
+    {% else %}
+		<form method="post" action="{{ url_for('newCuisine') }}">
+			Name: <input name ='name' type='text'><br><br>
+			Description: <textarea name = 'description' rows="4" cols="50" placeholder='Enter descriptions here'></textarea><br><br>
+
+			<button type = 'submit'>Submit</button>
+		</form>
+	{%endif%}
+{% include 'footer.html' %}
