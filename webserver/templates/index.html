@@ -1,24 +1,28 @@
-<html>
-  <style>
-    body{ 
-      font-size: 15pt;
-      font-family: arial;
-    }
-  </style>
 
+  {% include 'header.html' %}
+  <form method ="get">
+    <label for="searchVal">Search for recipes:</label>
+    <input name="searchVal" />
+    <button type='submit'>Search</button>
+  </form>
 
-<body>
-  <h1>Test Change</h1>
-  STUFF
-  <div>{{data}}</div>
-
-  <div>
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Preparation Time</th>
+      <th>Average Rating</th>
+      <th>Cuisine(s)</th>
+      <th>Type(s)</th>
+    </tr>
     {% for n in data %}
-    <div>{{n}}</div>
+    <tr>
+      <td><a href="/recipePage/{{n.id}}">{{n.name}}</a></td>
+      <td>{{n.preparation_time}}</td>
+      <td>{{n.rating|round(2,'floor')}}</td>
+      <td>{% for m in n.cuisine %} <a href="/?searchVal={{m}}">{{m}}</a>{% endfor %}</td>
+      <td>{% for m in n.type %} <a href="/?searchVal={{m}}">{{m}}</a>{% endfor %}</td>
+    </tr>
     {% endfor %}
-  </div>
+  </table>
 
-</body>
-
-
-</html>
+  {% include 'footer.html' %}

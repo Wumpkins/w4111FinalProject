@@ -1,0 +1,13 @@
+
+  {% include 'header.html' %}
+
+  <h2>{{ingredient.name}}</h2>
+
+  Description: {{ingredient.description}}
+  
+  <form method ="post" action="{{ url_for('addIngredient', ingredient_id = ingredient.id ) }}">
+    <button type='submit'>Add</button>
+  </form>
+  
+
+  {% include 'footer.html' %}

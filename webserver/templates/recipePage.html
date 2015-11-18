@@ -1,0 +1,101 @@
+
+
+  {% include 'header.html' %}
+
+  <h2>{{name}}</h2>
+
+  <form method ="post" action="{{ url_for('favoriteRecipe', recipe_id = recipe_id ) }}">
+    <button type='submit'>Favorite</button>
+  </form>
+
+  <div>
+    Posted by: {{user}}
+  </div>
+
+  <br>
+  
+  <div>
+    Preparation Time: {{time}}
+  </div>
+  
+  <br>
+
+  <div>
+    Cuisine:  
+    {% for n in cuisine %}
+    {{n.name}} 
+    {% endfor %}
+  </div>
+  
+  <div>
+    Food Type:
+    {% for n in foodtype %}
+    {{n.name}} 
+    {% endfor %}
+  </div>
+  
+  <div>
+    Estimated Price: {{price}}
+  </div>
+  
+  <br>
+  <br>
+  
+  <div>
+    Ingredients:
+    {% for n in ingred %}
+    <div>{{n.quantity}} {{n.measurement_type}} <a href = '/ingredient/{{n.id}}'>{{n.name}}</a></div>
+    {% endfor %}
+  </div>
+  
+  <br>
+  
+  <div>
+    Instructions:
+    <div>
+      {{instr}}
+    </div>
+  </div>
+  
+  <br>
+  <br>
+
+  <div>
+    Average Rating: {{rating|round(2,'floor')}}/10.0
+  </div>
+  
+  <br>
+  {%if session.logged_in %}
+  Rate and Comment
+    <form method="post" action="{{ url_for('comment', r_id=recipe_id) }}">
+      Rating
+      <select name ='rating'>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+      <textarea rows="4" cols="50" name="comment"> </textarea>
+      <button type="submit">Submit</button>
+    </form>
+  {% endif %}
+  <div>
+
+    User Comments:
+    {% for n in comments %}
+    <div><a href = '/user/{{n.id}}'>{{n.username}} </a> ({{n.rating}}/10) wrote: </div>
+    <div>{{n.description}}</div>
+    <hr>
+
+    {% endfor %}
+  </div>
+  
+    {% include 'footer.html' %}
+
+

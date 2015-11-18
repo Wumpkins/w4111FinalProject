@@ -1,0 +1,30 @@
+.header{
+	height: 100px;
+}
+.noStyleLink{
+	text-align: left;
+	float: left;
+}
+
+.noStyleLink a:link {
+   text-decoration: none;
+   color:inherit;
+}
+
+.noStyleLink a:visited {
+    text-decoration: none;
+    color:inherit;
+}
+
+.login{
+	float: right;
+	text-align: right;
+}
+.loginForm{
+	margin-bottom: 0px;
+}
+.options{
+	height: 6em; 
+	width: 12em;
+	overflow: auto;
+}

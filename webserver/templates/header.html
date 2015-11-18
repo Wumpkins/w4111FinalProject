@@ -1,0 +1,34 @@
+<html>
+  <title>Recipeit!</title>
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+<body>
+
+  <div class = 'header'>
+    <h1 class="noStyleLink"><a href='/'>Recipeit!</a></h1>
+
+    <div class = 'login'>
+    {%if not session.logged_in %}
+
+      <form class ='loginForm' method="post" action="{{ url_for('login') }}">
+        <label for="username">Username:</label>
+        <input type="text" name="username" /><br />
+        <button type="submit">Login</button>
+      </form>
+    
+    {% else %}
+      You are logged in as <a href='/user/{{session.userId}}'>{{session.username}}</a>.
+      <a href='/logout'>Logout</a>
+      <br>
+      <br>
+      <a href='/newRecipe'>Post a new recipe</a>
+    {% endif %}
+
+    </div>
+  </div>
+      <hr /> 
