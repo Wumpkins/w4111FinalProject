@@ -103,10 +103,10 @@ def index():
   recipes = sorted(recipes, key=itemgetter('id'))
   i=0;
   while i < len(recipes)-1:
-    if recipes[i]['id'] == recipes[i+1]['id']:
-      if recipes[i]['cuisine'][0] != recipes[i+1]['cuisine'][0]:
+    while i< len(recipes)-1 and recipes[i]['id'] == recipes[i+1]['id']:
+      if recipes[i+1]['cuisine'][0] not in recipes[i]['cuisine']:
         recipes[i]['cuisine'].append(recipes[i+1]['cuisine'][0])
-      if recipes[i]['type'][0] != recipes[i+1]['type'][0]:
+      if recipes[i+1]['type'][0] not in recipes[i]['type']:
         recipes[i]['type'].append(recipes[i+1]['type'][0])
       recipes.pop(i+1) 
     i+=1  
@@ -161,7 +161,48 @@ def logout():
 def newRecipe():
   print request.args
   if request.method == 'POST': 
-    print 'post'
+    sql = """
+      SELECT COUNT(*) FROM recipes;
+    """
+    cursor = g.conn.execute(sql)  
+    recipeId = cursor.fetchone().count + 1    
+    name = request.form['name']
+    instructions = request.form['instructions']
+    preparation_time = request.form['preparation_time']
+    user_posted = session['userId']
+
+    sql = """
+      INSERT INTO recipes VALUES
+      (%s, %s, %s, %s, %s)
+    """
+    cursor = g.conn.execute(sql, (recipeId, name, instructions, preparation_time, user_posted))
+    print "inserted recipe"
+
+    #ingredients
+    cursor = g.conn.execute("SELECT COUNT(*) FROM ingredients")
+    ingredientCount = cursor.fetchone().count
+    for i in range(ingredientCount):
+      j = str(i+1)
+      if request.form.get(j):
+        amount = request.form.get(j)
+        if amount:
+          g.conn.execute("INSERT INTO recipe_ingredients VALUES (%s, %s, %s)", (recipeId, int(j), int(amount)))
+    print "inserted ingredients"
+
+    #cuisines
+    cuisines = request.form.getlist('cuisine[]')
+    print cuisines
+    for i in cuisines:
+      cursor = g.conn.execute("INSERT INTO recipe_cuisines VALUES (%s, %s)", (recipeId, int(i)))
+
+    #food types
+    food_types = request.form.getlist('food_type[]')
+    for i in food_types:
+      cursor = g.conn.execute("INSERT INTO recipe_food_type VALUES (%s, %s)", (recipeId, int(i)))
+
+    flash('Posted new recipe')
+    cursor.close()
+    return redirect(url_for('recipePage', r_id=recipeId))
   r = {}
   #cuisine
   cursor = g.conn.execute("SELECT * FROM cuisines")
@@ -280,6 +321,9 @@ def recipePage(r_id):
     r['time']='unknown'
   if r.get('user') is None:
     r['user']='Admin'
+  else:
+    cursor = g.conn.execute("SELECT username FROM users u WHERE u.id = %s", (r.get('user')))
+    r['user'] = cursor.fetchone().username
   
   #cuisine
   cuisine=[]

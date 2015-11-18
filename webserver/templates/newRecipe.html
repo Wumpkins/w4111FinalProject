@@ -6,26 +6,24 @@
 			Recipe Name: <input name ='name' type='text'><br><br>
 			Preparation Time (minutes): <input name ='preparation_time' type='number'><br><br>
 			Instructions: <textarea name = 'instructions' rows="4" cols="50" placeholder='Enter instructions here'></textarea><br>	<br>
-			Ingredients: <div class = "options">
+			Ingredients: Can't find an ingredient? Add it <a href='/addIngredient'>here</a> <div class = "options">
 				{% for n in ingredients %}
-				 <input id={{n.id}} type="checkbox" name={{n.name}} value={{n.id}} />
-				 <label for={{n.name}}>{{n.name}}</label>
+				 <input size=3 type="numeric" name={{n.id}} />
+				 <label for={{n.id}}>{{n.measurement_type}}. {{n.name}}</label>
 				 <br>
 				{%endfor%}
 				</div>
 			<br>
-			Cuisines: <div class = "options">
+			Cuisines: Can't find an cuisine? Add it <a href='/addCuisine'>here</a><div class = "options">
 				{% for n in cuisines %}
-				 <input id={{n.id}} type="checkbox" name={{n.name}} value={{n.id}} />
-				 <label for={{n.name}}>{{n.name}}</label>
+				 {{n.name}}<input type="checkbox" name='cuisine[]' value={{n.id}} />
 				 <br>
 				{%endfor%}
 				</div>
 			<br>
-			Food Categories: <div class = "options">
+			Food Categories: Can't find an category? Add it <a href='/addCategory'>here</a><div class = "options">
 				{% for n in food_types %}
-				 <input id={{n.id}} type="checkbox" name={{n.name}} value={{n.id}} />
-				 <label for={{n.name}}>{{n.name}}</label>
+				 {{n.name}}<input type="checkbox" name='food_type[]' value={{n.id}} />
 				 <br>
 				{%endfor%}
 				</div>
