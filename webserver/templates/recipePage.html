@@ -14,11 +14,27 @@
   <div>
     Posted by: {{user}}
   </div>
-  
+
   <br>
   
   <div>
     Preparation Time: {{time}}
+  </div>
+  
+  <br>
+
+  <div>
+    Estimated Price: {{price}}
+  </div>
+  
+  <br>
+  <br>
+  
+  <div>
+    Ingredients:
+    {% for n in ingred %}
+    <div>{{n}}</div>
+    {% endfor %}
   </div>
   
   <br>
@@ -29,11 +45,26 @@
       {{instr}}
     </div>
   </div>
+  
+  <br>
   <br>
 
   <div>
-    Average Rating: {{rating|round(2,'floor')}}
+    Average Rating: {{rating|round(2,'floor')}}/10.0
   </div>
+  
+  <br>
+  
+  <div>
+    User Comments:
+    {% for n in comments %}
+    <div>{{n.username}} wrote: </div>
+    <div>{{n.description}}</div>
+    <br>
+    {% endfor %}
+  </div>
+  
+  
 </body>
 
 
