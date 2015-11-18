@@ -5,9 +5,10 @@
 
   Description: {{ingredient.description}}
   
+  {%if session.logged_in%}
   <form method ="post" action="{{ url_for('addIngredient', ingredient_id = ingredient.id ) }}">
     <button type='submit'>Add</button>
   </form>
-  
+  {%endif%}
 
   {% include 'footer.html' %}
