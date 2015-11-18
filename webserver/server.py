@@ -93,7 +93,8 @@ def index():
 
   recipes = []
   for result in cursor:
-    recipes.append(result['name'])  # can also be accessed using result[0]
+    print result
+    recipes.append(result['name'])
   cursor.close()
 
   #
