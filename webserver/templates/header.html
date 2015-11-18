@@ -15,7 +15,7 @@
     <div class = 'login'>
     {%if not session.logged_in %}
 
-      <form method="post" action="{{ url_for('login') }}">
+      <form class ='loginForm' method="post" action="{{ url_for('login') }}">
         <label for="username">Username:</label>
         <input type="text" name="username" /><br />
         <button type="submit">Login</button>
@@ -24,7 +24,11 @@
     {% else %}
       You are logged in as <a href='/user/{{session.userId}}'>{{session.username}}</a>.
       <a href='/logout'>Logout</a>
+      <br>
+      <br>
+      <a href='/newRecipe'>Post a new recipe</a>
     {% endif %}
+
     </div>
   </div>
       <hr /> 

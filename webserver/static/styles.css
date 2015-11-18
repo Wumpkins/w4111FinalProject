@@ -20,3 +20,11 @@
 	float: right;
 	text-align: right;
 }
+.loginForm{
+	margin-bottom: 0px;
+}
+.options{
+	height: 6em; 
+	width: 12em;
+	overflow: auto;
+}

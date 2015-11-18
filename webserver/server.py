@@ -116,8 +116,8 @@ def index():
   return render_template("index.html", **context)
 
 
-#login page
-@app.route('/login', methods = ['POST'])
+#login 
+@app.route('/login/', methods = ['POST'])
 def login():
   username = request.form['username']
   sql = """
@@ -149,13 +149,44 @@ def login():
   flash('You have been logged in')
   return redirect(url_for('index'))
       
-@app.route('/logout')
+@app.route('/logout/')
 def logout():
   session.pop('logged_in', None)
   session.pop('userId', None)
   session.pop('username', None)
   flash('You were logged out')
   return redirect(url_for('index'))
+
+@app.route('/newRecipe/', methods = ["POST", "GET"])
+def newRecipe():
+  print request.args
+  if request.method == 'POST': 
+    print 'post'
+  r = {}
+  #cuisine
+  cursor = g.conn.execute("SELECT * FROM cuisines")
+  cuisines = []
+  for result in cursor:
+    cuisines.append(result)
+  r['cuisines'] = cuisines
+  
+  #ingredients
+  cursor = g.conn.execute("SELECT * FROM ingredients")
+  ingredients = []
+  for result in cursor:
+    ingredients.append(result)
+  r['ingredients'] = ingredients
+  
+  #food types
+  cursor = g.conn.execute("SELECT * FROM food_types")
+  food_types = []
+  for result in cursor:
+    food_types.append(result)
+  r['food_types'] = food_types
+
+  #close and return
+  cursor.close()
+  return render_template("newRecipe.html", **r)
 
 #User profile page template
 @app.route('/user/<u_id>', methods = ["POST", "GET"])
@@ -234,7 +265,7 @@ def user(u_id):
   return render_template('user.html', **u)
 
 # Recipe Page Template
-@app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
+@app.route('/recipePage/<r_id>/', methods = ["POST", "GET"])
 def recipePage(r_id):
   result = []
   #recipe info

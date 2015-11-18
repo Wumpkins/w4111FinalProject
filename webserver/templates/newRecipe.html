@@ -1,0 +1,34 @@
+{% include 'header.html' %}
+	{%if not session.logged_in %}
+		Please login first
+    {% else %}
+		<form method="post" action="{{ url_for('newRecipe') }}">
+			Recipe Name: <input name ='name' type='text'><br><br>
+			Preparation Time (minutes): <input name ='preparation_time' type='number'><br><br>
+			Instructions: <textarea name = 'instructions' rows="4" cols="50" placeholder='Enter instructions here'></textarea><br>	<br>
+			Ingredients: <div class = "options">
+				{% for n in ingredients %}
+				 <input id={{n.id}} type="checkbox" name={{n.name}} value={{n.id}} />
+				 <label for={{n.name}}>{{n.name}}</label>
+				 <br>
+				{%endfor%}
+				</div>
+			<br>
+			Cuisines: <div class = "options">
+				{% for n in cuisines %}
+				 <input id={{n.id}} type="checkbox" name={{n.name}} value={{n.id}} />
+				 <label for={{n.name}}>{{n.name}}</label>
+				 <br>
+				{%endfor%}
+				</div>
+			<br>
+			Food Categories: <div class = "options">
+				{% for n in food_types %}
+				 <input id={{n.id}} type="checkbox" name={{n.name}} value={{n.id}} />
+				 <label for={{n.name}}>{{n.name}}</label>
+				 <br>
+				{%endfor%}
+				</div>
+		</form>
+	{%endif%}
+{% include 'footer.html' %}
