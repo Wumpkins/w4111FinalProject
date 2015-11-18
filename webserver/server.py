@@ -192,9 +192,24 @@ def logout():
 
 
 
-#
+#User profile page
+@app.route('/user/<u_id>', methods = ["POST", "GET"])
+def user(u_id):
+  result = []
+  u = {}
+  #user info
+  cursor = g.conn.execute("SELECT U.username FROM users U WHERE U.id = %s", (u_id))
+  if cursor is None: 
+    return render_template("404.html")
+  result = cursor.fetchone()
+  u['name'] = result['username']
+  
+  return render_template('user.html', ** u)
+
+
+
+
 # Recipe Page Template
-#
 @app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
 def recipePage(r_id):
   result = []
@@ -267,9 +282,8 @@ def recipePage(r_id):
     result = []
     for result in cursor:
       if result is not None:
-        if result[2] is not None:
+        if result['description'] is not None:
           comments.append(result)
-          
     r['comments'] = comments 
   
   #close and return
