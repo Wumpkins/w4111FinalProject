@@ -1,7 +1,42 @@
 
 {% include 'header.html' %}
 
-  <h1 class="noStyleLink"><a href='/'>Recepeit!</a></h1>
   <h2>{{name}}</h2>
+  
+  
+  <div>
+    Recipes posted by you:
+    {% for n in recipes %}
+    <div><a href="/recipePage/{{n.id}}">{{n.name}}</a></div>
+    {% endfor %}
+  </div>
+  
+  <br><br>
+  
+  <div>
+    Saved favorites:
+    {% for n in fave %}
+    <div><a href="/recipePage/{{n.id}}">{{n.name}}</a></div>
+    {% endfor %}
+  </div>
+  
+  <br><br>
+  
+  <div>
+    Grocery List:
+    {% for n in grocery %}
+    <div>{{n}}</div>
+    {% endfor %}
+  </div>
+  
+  <br><br>
+  
+  <div>
+    Suggested ingredients:
+    {% for n in sugg %}
+    <div>{{n}}</div>
+    {% endfor %}
+  </div>
+  
 
 {% include 'footer.html' %}
