@@ -1,15 +1,5 @@
-<html>
-  <style>
-    body{ 
-      font-size: 15pt;
-      font-family: arial;
-    }
-  </style>
 
-<body>
-
-  <h1 class="noStyleLink"><a href='/'>Recepeit!</a></h1>
-
+  {% include 'header.html' %}
   <form method ="get">
 
     <label for="searchVal">Search for recipes:</label>
@@ -36,8 +26,5 @@
     {% endfor %}
   </table>
 
+  {% include 'footer.html' %}
 
-</body>
-
-
-</html>

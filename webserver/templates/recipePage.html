@@ -1,14 +1,7 @@
-<html>
-  <style>
-    body{ 
-      font-size: 15pt;
-      font-family: arial;
-    }
-  </style>
 
 
-<body>
-  <h1 class="noStyleLink"><a href='/'>Recepeit!</a></h1>
+  {% include 'header.html' %}
+
   <h2>{{name}}</h2>
 
   <div>
@@ -64,8 +57,6 @@
     {% endfor %}
   </div>
   
-  
-</body>
+    {% include 'footer.html' %}
 
 
-</html>

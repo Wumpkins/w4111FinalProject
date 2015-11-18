@@ -1,16 +1,12 @@
 
-<title>Login</title>
+  {% include 'header.html' %}
 
-  <h1>Recipeit!</h1>
-  <div>
-  
-  </div>
   {% for message in get_flashed_messages() %}
     <div class=flash>{{ message }}</div>
   {% endfor %}
   <h2>Login</h2>
   {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
-  <form action="{{ url_for('login') }}" method=post>
+  <form action="/" method=post>
     <dl>
       <dt>Username:
       <dd><input type=text name=username>
@@ -19,6 +15,9 @@
       <dd><input type=submit value=Login>
     </dl>
   </form>
-</div>
+
+
+
+{% include 'footer.html' %}
 
 
