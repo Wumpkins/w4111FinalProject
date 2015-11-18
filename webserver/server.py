@@ -200,7 +200,7 @@ def recipePage(r_id):
   result = []
   #recipe info
   cursor = g.conn.execute("SELECT * FROM recipes r WHERE r.id = %s", (r_id))
-  if cursor is None:
+  if cursor.fetchone() is None:
     return render_template("404.html")
 
   result = cursor.fetchone()
