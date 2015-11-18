@@ -81,24 +81,42 @@ def index():
   searchVal = request.args.get('searchVal')
   if searchVal is not None:
     sql = """
-      SELECT * 
-      FROM recipes r 
-      WHERE r.name 
-      LIKE '%%'||%s||'%%'
+      SELECT R.id, R.name, R.preparation_time, R.user_posted, AVG(RV.rating)
+      FROM recipes R LEFT OUTER JOIN user_reviews RV
+        ON R.id = RV.recipe_id
+      WHERE R.name LIKE '%%'||%s||'%%'
+      GROUP BY id 
       """
-    print sql % searchVal
+    # print sql % searchVal
     cursor = g.conn.execute(sql, (searchVal))
   else:
-    cursor = g.conn.execute("SELECT * FROM recipes")
+    sql = """
+      SELECT R.id, R.name, R.preparation_time, R.user_posted, AVG(RV.rating) 
+      FROM recipes R LEFT OUTER JOIN user_reviews RV 
+        ON R.id = RV.recipe_id 
+        GROUP BY id;
+    """
+    cursor = g.conn.execute(sql)
 
   recipes = []
   for result in cursor:
     print result
+    preparation_time = result['preparation_time']
+    if preparation_time is None:
+      preparation_time = 'unknown'
+    user_posted = result['user_posted'] 
+    if user_posted is None:
+      user_posted = 'Admin'
+    rating = result[4]
+    if rating is None:
+      rating = 0;
     recipe = {
       'id': result['id'],
       'name': result['name'],
+      'preparation_time': preparation_time,
+      'user_posted': user_posted,
+      'rating': rating
     }
-    print recipe
     recipes.append(recipe)
   cursor.close()
 

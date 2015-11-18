@@ -18,11 +18,23 @@
     <button type='submit'>Search</button>
   </form>
 
-  <div>
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Preparation Time</th>
+      <th>User Posted</th>
+      <th>Average Rating</th>
+    </tr>
     {% for n in data %}
-    <div><a href="/recipePage/{{n.id}}">{{n.name}}</a></div>
+    <tr>
+      <td><a href="/recipePage/{{n.id}}">{{n.name}}</a></td>
+      <td>{{n.preparation_time}}</td>
+      <td>{{n.user_posted}}</td>
+      <td>{{n.rating|round(2,'floor')}}</td>
+    </tr>
     {% endfor %}
-  </div>
+  </table>
+
 
 </body>
 
