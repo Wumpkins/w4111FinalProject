@@ -487,6 +487,68 @@ def favoriteRecipe():
     cursor.close()
     return redirect(url_for('user', u_id=userID))
 
+@app.route('/newIngredient/', methods = ['POST', 'GET'])
+def newIngredient():
+  if request.method == 'POST': 
+    sql = """
+      SELECT COUNT(*) FROM ingredients;
+    """
+    cursor = g.conn.execute(sql)  
+    ingredientId = cursor.fetchone().count + 1    
+    name = request.form['name']
+    measurement_type = request.form['unit']
+    price = request.form['price']
+    description = request.form['description']
+
+    sql = """
+      INSERT INTO ingredients VALUES
+      (%s, %s, %s, %s, %s)
+    """
+    cursor = g.conn.execute(sql, (ingredientId, price, name, measurement_type, description))
+    return redirect(url_for('ingredient', i_id=ingredientId))
+  else:
+    return render_template("newIngredient.html")
+
+
+@app.route('/newCuisine/', methods = ['POST', 'GET'])
+def newCuisine():
+  if request.method == 'POST': 
+    sql = """
+      SELECT COUNT(*) FROM cuisines;
+    """
+    cursor = g.conn.execute(sql)  
+    cuisineId = cursor.fetchone().count + 1    
+    name = request.form['name']
+    description = request.form['description']
+
+    sql = """
+      INSERT INTO cuisines VALUES
+      (%s, %s, %s)
+    """
+    cursor = g.conn.execute(sql, (cuisineId, name, description))
+    return redirect(url_for('newRecipe'))
+  else:
+    return render_template("newCuisine.html")
+
+@app.route('/newFoodType/', methods = ['POST', 'GET'])
+def newFoodType():
+  if request.method == 'POST': 
+    sql = """
+      SELECT COUNT(*) FROM food_types;
+    """
+    cursor = g.conn.execute(sql)  
+    typeId = cursor.fetchone().count + 1    
+    name = request.form['name']
+    description = request.form['description']
+
+    sql = """
+      INSERT INTO food_types VALUES
+      (%s, %s, %s)
+    """
+    cursor = g.conn.execute(sql, (typeId, name, description))
+    return redirect(url_for('newRecipe'))
+  else:
+    return render_template("newFoodType.html")
 
 if __name__ == "__main__":
   import click
