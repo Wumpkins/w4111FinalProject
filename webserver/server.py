@@ -145,15 +145,25 @@ def index():
 @app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
 def recipePage(r_id):
   result = []
-  cursor = g.conn.execute("SELECT * FROM recipes WHERE name == :n ;", n = r_id)
-  result = cursor.fetchone()
-  #r_instr = result['instructions'] 
-  #r_time = result['perparation_time']
-  #r_user = result['user_posted']
-  
-  cursor.close()
-  #, r_instr = r_instr, r_time=r_time, r_user = r_user
-  return render_template("recipePage.html", r_id=r_id)
+  cursor = g.conn.execute("SELECT * FROM recipes r WHERE r.id = %s", (r_id))
+  if cursor is None:
+    return renter_template("404.html")
+  else:
+    result = cursor.fetchone()
+    r = {'name':result['name'],
+      'instr': result['instructions'], 
+      'time':result['preparation_time'], 
+      'user':result['user_posted']}
+    
+    if r.get('time') is None:
+      r['time']='Unknown'
+    if r.get('user') is None:
+      r['user']='Admin'
+      
+    
+    cursor.close()
+    return render_template("recipePage.html", **r)
+    
 
 @app.route('/test/', methods =["POST", "GET"])
 def test():
