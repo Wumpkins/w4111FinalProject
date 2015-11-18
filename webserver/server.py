@@ -160,6 +160,41 @@ def index():
   #
   return render_template("index.html", **context)
 
+
+#login page
+@app.route('/login', methods = ['POST', 'GET'])
+def login():
+  error = None
+  if request.method == 'POST' :
+    if request.form['username']!=app.config['USERNAME']:
+      error = 'Invalid unsername'
+    elif request.form['password']!=app.config['PASSWORD']:
+      error = 'Invalid password'
+    else:
+      session['logged_in'] = True
+      flash ('You were logged in')
+      return redirect(url_for('show_entries'))
+  return render_template('login.html',error = error)
+  
+  '''
+  {% if not session.logged_in %}
+    <a href="{{ url_for('login') }}">log in</a>
+  {% else %}
+    <a href="{{ url_for('logout') }}">log out</a>
+  {% endif %}
+  '''
+    
+@app.route('/logout')
+def logout():
+  session.pop('logged_in', None)
+  flash('You were logged out')
+  return redirect(url_for('show_entries'))
+
+
+
+#
+# Recipe Page Template
+#
 @app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
 def recipePage(r_id):
   result = []
@@ -190,14 +225,23 @@ def recipePage(r_id):
   
   #ingredients
   ingred = []
-  sql_ingred = """SELECT I.name
+  price = 0
+  sql_ingred = """SELECT I.name, RI.quantity, I.measurement_type, I.price
         FROM ingredients I, recipe_ingredients RI
-        WHERE RI.ingredient_id = I.id AND RI.recipe_id = %s"""
-  cursor = g.conn.execute(sql_ingred, r_id)
+        WHERE RI.ingredient_id = I.id AND RI.recipe_id = %s;"""
+  cursor = g.conn.execute(sql_ingred, (r_id))
   result = []
   for result in cursor:
-    ingred.append(result[0])
-
+    if result is not None:
+      price += result[1]*result[3]
+      ingred.append(str(result[1])+" "+str(result[2])+" "+str(result[0]))
+  if ingred == [] :
+    ingred.append("N/A")
+  r['ingred'] = ingred
+  
+  #price of ingredients:
+  r['price'] = price
+  
   #rating
   sql_rating = """SELECT AVG(RV.rating)
         FROM recipes R INNER JOIN user_reviews RV 
@@ -207,17 +251,28 @@ def recipePage(r_id):
         WHERE R.id=%s) 
 	      GROUP BY id;"""
   
-  cursor = g.conn.execute(sql_rating, r_id)
+  cursor = g.conn.execute(sql_rating, (r_id))
   avg = cursor.fetchone()
   if avg is None:
     r['rating'] = 0
   else:
     r['rating'] = avg[0]
-  
-  #comments
-  
-  
     
+    #comments
+    comments = []
+    sql_comments = """SELECT U.username, UR.rating, UR.description
+          FROM users U, user_reviews UR
+          WHERE U.id = UR.user_id AND UR.recipe_id = %s"""
+    cursor = g.conn.execute(sql_comments, (r_id))
+    result = []
+    for result in cursor:
+      if result is not None:
+        if result[2] is not None:
+          comments.append(result)
+          
+    r['comments'] = comments 
+  
+  #close and return
   cursor.close()
   return render_template("recipePage.html", **r)
     
