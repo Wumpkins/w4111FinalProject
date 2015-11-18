@@ -1,5 +1,9 @@
+.header{
+	height: 100px;
+}
 .noStyleLink{
-
+	text-align: left;
+	float: left;
 }
 
 .noStyleLink a:link {
@@ -10,4 +14,9 @@
 .noStyleLink a:visited {
     text-decoration: none;
     color:inherit;
+}
+
+.login{
+	float: right;
+	text-align: right;
 }

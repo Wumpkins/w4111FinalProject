@@ -11,5 +11,20 @@
 
   <div class = 'header'>
     <h1 class="noStyleLink"><a href='/'>Recepeit!</a></h1>
-    <hr />
+
+    <div class = 'login'>
+    {%if not session.logged_in %}
+
+      <form method="post" action="{{ url_for('login') }}">
+        <label for="username">Username:</label>
+        <input type="text" name="username" /><br />
+        <button type="submit">Login</button>
+      </form>
+    
+    {% else %}
+      You are logged in as {{session.username}}.
+      <a href='/logout'>Logout</a>
+    {% endif %}
+    </div>
   </div>
+      <hr /> 
