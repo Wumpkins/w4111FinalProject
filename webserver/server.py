@@ -11,16 +11,14 @@ import os
 from operator import itemgetter
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, session, flash, url_for
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
+app.secret_key = 'doesnt really matter what this is'
 
 DATABASEURI = "postgresql://dhc2129:199@w4111db1.cloudapp.net:5432/proj1part2"
 
-#
-# This line creates a database engine that knows how to connect to the URI above
-#
 engine = create_engine(DATABASEURI)
 
 @app.before_request
@@ -50,32 +48,8 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
-
-#
-# @app.route is a decorator around index() that means:
-#   run index() whenever the user tries to access the "/" path using a POST or GET request
-#
-# If you wanted the user to go to e.g., localhost:8111/foobar/ with POST or GET then you could use
-#
-#       @app.route("/foobar/", methods=["POST", "GET"])
-#
-# PROTIP: (the trailing / in the path is important)
-# 
-# see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
-# see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-# 
-
 @app.route('/', methods=["POST", "GET"])
 def index():
-  """
-  request is a special object that Flask provides to access web request information:
-
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments e.g., {a:1, b:2} for http://localhost?a=1&b=2
-
-  See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
-  """
 
   print request.args
 
@@ -130,7 +104,6 @@ def index():
   i=0;
   while i < len(recipes)-1:
     if recipes[i]['id'] == recipes[i+1]['id']:
-      print '1'
       if recipes[i]['cuisine'][0] != recipes[i+1]['cuisine'][0]:
         recipes[i]['cuisine'].append(recipes[i+1]['cuisine'][0])
       if recipes[i]['type'][0] != recipes[i+1]['type'][0]:
@@ -138,59 +111,51 @@ def index():
       recipes.pop(i+1) 
     i+=1  
 
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-
   context = dict( data = recipes )
 
-
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
   return render_template("index.html", **context)
 
 
 #login page
-@app.route('/login', methods = ['POST', 'GET'])
+@app.route('/login', methods = ['POST'])
 def login():
-  error = None
-  if request.method == 'POST' :
-    if request.form['username']!=app.config['USERNAME']:
-      error = 'Invalid unsername'
-    elif request.form['password']!=app.config['PASSWORD']:
-      error = 'Invalid password'
-    else:
-      session['logged_in'] = True
-      flash ('You were logged in')
-      return redirect(url_for('show_entries'))
-  return render_template('login.html',error = error)
-  
-  '''
-  {% if not session.logged_in %}
-    <a href="{{ url_for('login') }}">log in</a>
-  {% else %}
-    <a href="{{ url_for('logout') }}">log out</a>
-  {% endif %}
-  '''
+  username = request.form['username']
+  sql = """
+  SELECT * from users U
+  WHERE U.username = %s
+  """
+  cursor = g.conn.execute(sql, (username))
+  user = cursor.fetchone()
+  if user is None:
+    sql = """
+      SELECT COUNT(*) FROM users;
+    """
+    cursor = g.conn.execute(sql)
+    count = cursor.fetchone().count + 1
+
+    sql = """
+      INSERT INTO users VALUES 
+      (%s, %s)
+    """
+    cursor = g.conn.execute(sql, (count, username))
+    userId = count;
+  else:
+    userId = user[0]
     
+  session['logged_in'] = True
+  session['userId'] = userId
+  session['username'] = username
+  cursor.close()
+  flash('You have been logged in')
+  return redirect(url_for('index'))
+      
 @app.route('/logout')
 def logout():
   session.pop('logged_in', None)
+  session.pop('userId', None)
+  session.pop('username', None)
   flash('You were logged out')
-  return redirect(url_for('show_entries'))
-
-
+  return redirect(url_for('index'))
 
 #User profile page template
 @app.route('/user/<u_id>', methods = ["POST", "GET"])
@@ -266,9 +231,6 @@ def user(u_id):
   cursor.close()
   return render_template('user.html', **u)
 
-
-
-
 # Recipe Page Template
 @app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
 def recipePage(r_id):
@@ -335,7 +297,7 @@ def recipePage(r_id):
     
     #comments
     comments = []
-    sql_comments = """SELECT U.username, UR.rating, UR.description
+    sql_comments = """SELECT U.username, U.id, UR.rating, UR.description
           FROM users U, user_reviews UR
           WHERE U.id = UR.user_id AND UR.recipe_id = %s"""
     cursor = g.conn.execute(sql_comments, (r_id))
