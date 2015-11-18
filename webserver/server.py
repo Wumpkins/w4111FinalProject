@@ -91,10 +91,11 @@ def index():
     cursor = g.conn.execute(sql, (searchVal))
   else:
     sql = """
-      SELECT R.id, R.name, R.preparation_time, R.user_posted, AVG(RV.rating) 
-      FROM recipes R LEFT OUTER JOIN user_reviews RV 
-        ON R.id = RV.recipe_id 
-        GROUP BY id;
+      SELECT R.id, R.name, R.preparation_time, R.user_posted, AVG(RV.rating)
+      FROM recipes R LEFT OUTER JOIN user_reviews RV ON R.id = RV.recipe_id 
+        LEFT OUTER JOIN recipe_cuisines RC ON R.id = RC.recipe_id
+        LEFT OUTER JOIN recipe_food_type RT ON R.id = RT.recipe_id
+      GROUP BY id;
     """
     cursor = g.conn.execute(sql)
 
