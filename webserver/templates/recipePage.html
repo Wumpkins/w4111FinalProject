@@ -4,10 +4,11 @@
 
   <h2>{{name}}</h2>
 
+  {%if session.logged_in%}
   <form method ="post" action="{{ url_for('favoriteRecipe', recipe_id = recipe_id ) }}">
     <button type='submit'>Favorite</button>
   </form>
-
+  {%endif%}
   <div>
     Posted by: {{user}}
   </div>

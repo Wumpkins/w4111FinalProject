@@ -434,7 +434,7 @@ def ingredient(i_id):
 @app.route('/addIngredient/', methods = ['POST'])
 def addIngredient():
   ingredient_id = int(request.args['ingredient_id'])
-  if not (session['logged_in']):
+  if not session['logged_in']:
     flash('Please log in first')
     return redirect(url_for('ingredient', i_id=ingredient_id))
   else:
@@ -459,13 +459,14 @@ def addIngredient():
     cursor.close()
     return redirect(url_for('user', u_id=userID))
 
-@app.route('/favoriteRecipe/',methods = ['POST'])
+@app.route('/favoriteRecipe/', methods = ['POST'])
 def favoriteRecipe():
-  recipe_id = int(request.args['recipe_id'])
-  if not (session['logged_in']):
+  print session['logged_in']
+  if not session['logged_in']:
     flash('Please log in first')
     return redirect(url_for('recipePage', r_id=recipe_id))
   else:
+    recipe_id = int(request.args['recipe_id'])
     userID = session['userId']
     userName = session['username']
     sql = """
