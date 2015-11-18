@@ -93,13 +93,7 @@ def index():
 
   recipes = []
   for result in cursor:
-    print result
-    recipe = {
-      'id': result['id'],
-      'name': result['name'],
-    }
-    print recipe
-    recipes.append(recipe)
+    recipes.append(result['name'])  # can also be accessed using result[0]
   cursor.close()
 
   #
@@ -127,33 +121,64 @@ def index():
 @app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
 def recipePage(r_id):
   result = []
+  #recipe info
   cursor = g.conn.execute("SELECT * FROM recipes r WHERE r.id = %s", (r_id))
   if cursor is None:
-    return renter_template("404.html")
+    return render_template("404.html")
+
+  result = cursor.fetchone()
+  r = {'name':result['name'],
+    'instr': result['instructions'], 
+    'time':result['preparation_time'], 
+    'user':result['user_posted']}
+  if r.get('time') is None:
+    r['time']='unknown'
+  if r.get('user') is None:
+    r['user']='Admin'
+  
+  #cuisine
+  sql_cuisine = """SELECT C.name
+        FROM cuisines C, recipe_cuisines RC
+        WHERE RC.cuisine_id = C.id AND RC.recipe_id = %s"""
+  cursor = g.conn.execute(sql_cuisine, r_id)
+  result = cursor.fetchone();
+  r['cuisine'] = result[0];
+  if r.get('cuisine') is None:
+    r['cuisine'] = "N/A"
+  
+  #ingredients
+  ingred = []
+  sql_ingred = """SELECT I.name
+        FROM ingredients I, recipe_ingredients RI
+        WHERE RI.ingredient_id = I.id AND RI.recipe_id = %s"""
+  cursor = g.conn.execute(sql_ingred, r_id)
+  result = []
+  for result in cursor:
+    ingred.append(result[0])
+
+  #rating
+  sql_rating = """SELECT AVG(RV.rating)
+        FROM recipes R INNER JOIN user_reviews RV 
+        ON R.id = RV.recipe_id WHERE R.id IN 
+        (SELECT user_reviews.recipe_id 
+	      FROM user_reviews
+        WHERE R.id=%s) 
+	      GROUP BY id;"""
+  
+  cursor = g.conn.execute(sql_rating, r_id)
+  avg = cursor.fetchone()
+  if avg is None:
+    r['rating'] = 0
   else:
-    result = cursor.fetchone()
-    r = {'name':result['name'],
-      'instr': result['instructions'], 
-      'time':result['preparation_time'], 
-      'user':result['user_posted']}
+    r['rating'] = avg[0]
+  
+  #comments
+  
+  
     
-    if r.get('time') is None:
-      r['time']='Unknown'
-    if r.get('user') is None:
-      r['user']='Admin'
-      
+  cursor.close()
+  return render_template("recipePage.html", **r)
     
-    cursor.close()
-    return render_template("recipePage.html", **r)
-    
-
-@app.route('/test/', methods =["POST", "GET"])
-def test():
-  return render_template("test.html")
-
-@app.route('/test2/', methods =["POST", "GET"])
-def test2():
-  return render_template("test.html")
 
 if __name__ == "__main__":
   import click
