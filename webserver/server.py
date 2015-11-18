@@ -260,8 +260,6 @@ def user(u_id):
     if result is not None:
       suggestions.append(result['name'])
   u['sugg']=suggestions
-  #add ingredients to grocery list
-  
   
   #close
   print u
