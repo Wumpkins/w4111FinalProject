@@ -461,7 +461,6 @@ def addIngredient():
 
 @app.route('/favoriteRecipe/', methods = ['POST'])
 def favoriteRecipe():
-  print session['logged_in']
   if not session['logged_in']:
     flash('Please log in first')
     return redirect(url_for('recipePage', r_id=recipe_id))
@@ -502,6 +501,15 @@ def newIngredient():
     description = request.form['description']
 
     sql = """
+      SELECT * FROM ingredients i
+      WHERE i.name = %s
+    """
+    cursor = g.conn.execute(sql, (name))
+    if cursor.fetchone() is not None:
+      flash('Ingredient already exists!')
+      return render_template("newIngredient.html")
+
+    sql = """
       INSERT INTO ingredients VALUES
       (%s, %s, %s, %s, %s)
     """
@@ -523,6 +531,15 @@ def newCuisine():
     description = request.form['description']
 
     sql = """
+      SELECT * FROM cuisines c
+      WHERE c.name = %s
+    """
+    cursor = g.conn.execute(sql, (name))
+    if cursor.fetchone() is not None:
+      flash('Cuisine already exists!')
+      return render_template("newCuisine.html")
+
+    sql = """
       INSERT INTO cuisines VALUES
       (%s, %s, %s)
     """
@@ -541,6 +558,15 @@ def newFoodType():
     typeId = cursor.fetchone().count + 1    
     name = request.form['name']
     description = request.form['description']
+
+    sql = """
+      SELECT * FROM food_types f
+      WHERE f.name = %s
+    """
+    cursor = g.conn.execute(sql, (name))
+    if cursor.fetchone() is not None:
+      flash('Food Type already exists!')
+      return render_template("newFoodType.html")
 
     sql = """
       INSERT INTO food_types VALUES
