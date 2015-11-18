@@ -6,10 +6,9 @@
     }
   </style>
 
-
 <body>
 
-  <h1>Recepeit!</h1>
+  <h1 class="noStyleLink"><a href='/'>Recepeit!</a></h1>
 
   <form method ="get">
 
@@ -22,15 +21,17 @@
     <tr>
       <th>Name</th>
       <th>Preparation Time</th>
-      <th>User Posted</th>
       <th>Average Rating</th>
+      <th>Cuisine(s)</th>
+      <th>Type(s)</th>
     </tr>
     {% for n in data %}
     <tr>
       <td><a href="/recipePage/{{n.id}}">{{n.name}}</a></td>
       <td>{{n.preparation_time}}</td>
-      <td>{{n.user_posted}}</td>
       <td>{{n.rating|round(2,'floor')}}</td>
+      <td>{% for m in n.cuisine %} <a href="/?searchVal={{m}}">{{m}}</a>{% endfor %}</td>
+      <td>{% for m in n.type %} <a href="/?searchVal={{m}}">{{m}}</a>{% endfor %}</td>
     </tr>
     {% endfor %}
   </table>

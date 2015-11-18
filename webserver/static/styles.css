@@ -1,0 +1,11 @@
+.noStyleLink{
+	text-align: center;
+}
+
+.noStyleLink a:link {
+    text-decoration: none;
+}
+
+.noStyleLink a:visited {
+    text-decoration: none;
+}

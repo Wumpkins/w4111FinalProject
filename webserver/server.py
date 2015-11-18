@@ -8,6 +8,7 @@ Lusa Zhan (lz2371)
 """
 
 import os
+from operator import itemgetter
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
@@ -81,45 +82,61 @@ def index():
   searchVal = request.args.get('searchVal')
   if searchVal is not None:
     sql = """
-      SELECT R.id, R.name, R.preparation_time, R.user_posted, AVG(RV.rating)
-      FROM recipes R LEFT OUTER JOIN user_reviews RV
-        ON R.id = RV.recipe_id
-      WHERE R.name LIKE '%%'||%s||'%%'
-      GROUP BY id 
+      SELECT R.id, R.name, R.preparation_time, AVG(RV.rating), C.name, FT.name
+      FROM recipes R LEFT OUTER JOIN user_reviews RV ON (R.id = RV.recipe_id) 
+        LEFT OUTER JOIN recipe_cuisines RC ON (R.id = RC.recipe_id) 
+          INNER JOIN cuisines C ON (C.id = RC.cuisine_id)
+        LEFT OUTER JOIN recipe_food_type RT ON (R.id = RT.recipe_id) 
+          INNER JOIN food_types FT ON (FT.id = RT.type_id) 
+      WHERE R.name LIKE '%%'||%s||'%%' OR C.name LIKE '%%'||%s||'%%' OR FT.name LIKE '%%'||%s||'%%'
+      GROUP BY R.id, C.name, FT.name; 
       """
     # print sql % searchVal
-    cursor = g.conn.execute(sql, (searchVal))
+    cursor = g.conn.execute(sql, (searchVal,searchVal,searchVal))
   else:
     sql = """
-      SELECT R.id, R.name, R.preparation_time, R.user_posted, AVG(RV.rating)
-      FROM recipes R LEFT OUTER JOIN user_reviews RV ON R.id = RV.recipe_id 
-        LEFT OUTER JOIN recipe_cuisines RC ON R.id = RC.recipe_id
-        LEFT OUTER JOIN recipe_food_type RT ON R.id = RT.recipe_id
-      GROUP BY id;
+      SELECT R.id, R.name, R.preparation_time, AVG(RV.rating), C.name, FT.name
+      FROM recipes R LEFT OUTER JOIN user_reviews RV ON (R.id = RV.recipe_id) 
+        LEFT OUTER JOIN recipe_cuisines RC ON (R.id = RC.recipe_id) 
+          INNER JOIN cuisines C ON (C.id = RC.cuisine_id)
+        LEFT OUTER JOIN recipe_food_type RT ON (R.id = RT.recipe_id) 
+          INNER JOIN food_types FT ON (FT.id = RT.type_id) 
+      GROUP BY R.id, C.name, FT.name;
     """
     cursor = g.conn.execute(sql)
 
   recipes = []
   for result in cursor:
-    print result
     preparation_time = result['preparation_time']
     if preparation_time is None:
       preparation_time = 'unknown'
-    user_posted = result['user_posted'] 
-    if user_posted is None:
-      user_posted = 'Admin'
-    rating = result[4]
+    rating = result[3]
     if rating is None:
       rating = 0;
+    cuisine = result[4]
+    foodType = result[5]
     recipe = {
       'id': result['id'],
-      'name': result['name'],
+      'name': result[1],
       'preparation_time': preparation_time,
-      'user_posted': user_posted,
-      'rating': rating
+      'rating': rating,
+      'cuisine': [cuisine],
+      'type': [foodType]
     }
     recipes.append(recipe)
   cursor.close()
+
+  recipes = sorted(recipes, key=itemgetter('id'))
+  i=0;
+  while i < len(recipes)-1:
+    if recipes[i]['id'] == recipes[i+1]['id']:
+      print '1'
+      if recipes[i]['cuisine'][0] != recipes[i+1]['cuisine'][0]:
+        recipes[i]['cuisine'].append(recipes[i+1]['cuisine'][0])
+      if recipes[i]['type'][0] != recipes[i+1]['type'][0]:
+        recipes[i]['type'].append(recipes[i+1]['type'][0])
+      recipes.pop(i+1) 
+    i+=1  
 
   #
   # Flask uses Jinja templates, which is an extension to HTML where you can
@@ -146,33 +163,64 @@ def index():
 @app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
 def recipePage(r_id):
   result = []
+  #recipe info
   cursor = g.conn.execute("SELECT * FROM recipes r WHERE r.id = %s", (r_id))
   if cursor is None:
-    return renter_template("404.html")
+    return render_template("404.html")
+
+  result = cursor.fetchone()
+  r = {'name':result['name'],
+    'instr': result['instructions'], 
+    'time':result['preparation_time'], 
+    'user':result['user_posted']}
+  if r.get('time') is None:
+    r['time']='unknown'
+  if r.get('user') is None:
+    r['user']='Admin'
+  
+  #cuisine
+  sql_cuisine = """SELECT C.name
+        FROM cuisines C, recipe_cuisines RC
+        WHERE RC.cuisine_id = C.id AND RC.recipe_id = %s"""
+  cursor = g.conn.execute(sql_cuisine, r_id)
+  result = cursor.fetchone();
+  r['cuisine'] = result[0];
+  if r.get('cuisine') is None:
+    r['cuisine'] = "N/A"
+  
+  #ingredients
+  ingred = []
+  sql_ingred = """SELECT I.name
+        FROM ingredients I, recipe_ingredients RI
+        WHERE RI.ingredient_id = I.id AND RI.recipe_id = %s"""
+  cursor = g.conn.execute(sql_ingred, r_id)
+  result = []
+  for result in cursor:
+    ingred.append(result[0])
+
+  #rating
+  sql_rating = """SELECT AVG(RV.rating)
+        FROM recipes R INNER JOIN user_reviews RV 
+        ON R.id = RV.recipe_id WHERE R.id IN 
+        (SELECT user_reviews.recipe_id 
+	      FROM user_reviews
+        WHERE R.id=%s) 
+	      GROUP BY id;"""
+  
+  cursor = g.conn.execute(sql_rating, r_id)
+  avg = cursor.fetchone()
+  if avg is None:
+    r['rating'] = 0
   else:
-    result = cursor.fetchone()
-    r = {'name':result['name'],
-      'instr': result['instructions'], 
-      'time':result['preparation_time'], 
-      'user':result['user_posted']}
+    r['rating'] = avg[0]
+  
+  #comments
+  
+  
     
-    if r.get('time') is None:
-      r['time']='Unknown'
-    if r.get('user') is None:
-      r['user']='Admin'
-      
+  cursor.close()
+  return render_template("recipePage.html", **r)
     
-    cursor.close()
-    return render_template("recipePage.html", **r)
-    
-
-@app.route('/test/', methods =["POST", "GET"])
-def test():
-  return render_template("test.html")
-
-@app.route('/test2/', methods =["POST", "GET"])
-def test2():
-  return render_template("test.html")
 
 if __name__ == "__main__":
   import click
