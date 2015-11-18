@@ -51,7 +51,7 @@
   <div>
     User Comments:
     {% for n in comments %}
-    <div>{{n.username}} wrote: </div>
+    <div><a href = '/user/{{n.id}}'>{{n.username}}</a> wrote: </div>
     <div>{{n.description}}</div>
     <br>
     {% endfor %}

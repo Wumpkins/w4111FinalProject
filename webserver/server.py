@@ -299,7 +299,7 @@ def recipePage(r_id):
     
     #comments
     comments = []
-    sql_comments = """SELECT U.username, UR.rating, UR.description
+    sql_comments = """SELECT U.username, U.id, UR.rating, UR.description
           FROM users U, user_reviews UR
           WHERE U.id = UR.user_id AND UR.recipe_id = %s"""
     cursor = g.conn.execute(sql_comments, (r_id))
