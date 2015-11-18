@@ -23,13 +23,6 @@ engine = create_engine(DATABASEURI)
 
 @app.before_request
 def before_request():
-  """
-  This function is run at the beginning of every web request 
-  (every time you enter an address in the web browser).
-  We use it to setup a database connection that can be used throughout the request
-
-  The variable g is globally accessible
-  """
   try:
     g.conn = engine.connect()
   except:
@@ -39,10 +32,6 @@ def before_request():
 
 @app.teardown_request
 def teardown_request(exception):
-  """
-  At the end of the web request, this makes sure to close the database connection.
-  If you don't the database could run out of memory!
-  """
   try:
     g.conn.close()
   except Exception as e:
@@ -59,9 +48,9 @@ def index():
       SELECT R.id, R.name, R.preparation_time, AVG(RV.rating), C.name, FT.name
       FROM recipes R LEFT OUTER JOIN user_reviews RV ON (R.id = RV.recipe_id) 
         LEFT OUTER JOIN recipe_cuisines RC ON (R.id = RC.recipe_id) 
-          INNER JOIN cuisines C ON (C.id = RC.cuisine_id)
+          LEFT OUTER JOIN cuisines C ON (C.id = RC.cuisine_id)
         LEFT OUTER JOIN recipe_food_type RT ON (R.id = RT.recipe_id) 
-          INNER JOIN food_types FT ON (FT.id = RT.type_id) 
+          LEFT OUTER JOIN food_types FT ON (FT.id = RT.type_id) 
       WHERE R.name LIKE '%%'||%s||'%%' OR C.name LIKE '%%'||%s||'%%' OR FT.name LIKE '%%'||%s||'%%'
       GROUP BY R.id, C.name, FT.name; 
       """
@@ -72,9 +61,9 @@ def index():
       SELECT R.id, R.name, R.preparation_time, AVG(RV.rating), C.name, FT.name
       FROM recipes R LEFT OUTER JOIN user_reviews RV ON (R.id = RV.recipe_id) 
         LEFT OUTER JOIN recipe_cuisines RC ON (R.id = RC.recipe_id) 
-          INNER JOIN cuisines C ON (C.id = RC.cuisine_id)
+          LEFT OUTER JOIN cuisines C ON (C.id = RC.cuisine_id)
         LEFT OUTER JOIN recipe_food_type RT ON (R.id = RT.recipe_id) 
-          INNER JOIN food_types FT ON (FT.id = RT.type_id) 
+          LEFT OUTER JOIN food_types FT ON (FT.id = RT.type_id) 
       GROUP BY R.id, C.name, FT.name;
     """
     cursor = g.conn.execute(sql)
@@ -176,7 +165,6 @@ def newRecipe():
       (%s, %s, %s, %s, %s)
     """
     cursor = g.conn.execute(sql, (recipeId, name, instructions, preparation_time, user_posted))
-    print "inserted recipe"
 
     #ingredients
     cursor = g.conn.execute("SELECT COUNT(*) FROM ingredients")
@@ -187,11 +175,9 @@ def newRecipe():
         amount = request.form.get(j)
         if amount:
           g.conn.execute("INSERT INTO recipe_ingredients VALUES (%s, %s, %s)", (recipeId, int(j), int(amount)))
-    print "inserted ingredients"
 
     #cuisines
     cuisines = request.form.getlist('cuisine[]')
-    print cuisines
     for i in cuisines:
       cursor = g.conn.execute("INSERT INTO recipe_cuisines VALUES (%s, %s)", (recipeId, int(i)))
 
@@ -299,7 +285,6 @@ def user(u_id):
   u['sugg']=suggestions
   
   #close
-  print u
   cursor.close()
   return render_template('user.html', **u)
 
@@ -313,7 +298,9 @@ def recipePage(r_id):
   if result is None:
     return render_template("404.html")
 
-  r = {'name':result['name'],
+  r = {
+    'recipe_id' : r_id,
+    'name':result['name'],
     'instr': result['instructions'], 
     'time':result['preparation_time'], 
     'user':result['user_posted']}
@@ -406,13 +393,36 @@ def recipePage(r_id):
   cursor.close()
   return render_template("recipePage.html", **r)
     
+@app.route('/comment/', methods = ["POST"])
+def comment():
+
+  r_id = int(request.args['r_id'])
+  rating = request.form['rating']
+  username = session['username']
+  userId = session['userId']
+  comment = request.form['comment']
+  sql = """
+    SELECT * 
+    FROM user_reviews U 
+    WHERE U.recipe_id = %s AND U.user_id = %s;
+  """
+  cursor = g.conn.execute(sql, r_id, userId)
+  result = cursor.fetchone()
+  if result is None:
+    sql = """
+      INSERT INTO user_reviews VALUES
+      (%s, %s, %s, %s);
+    """
+    cursor = g.conn.execute(sql, r_id, userId, comment, rating)
+
+  return redirect(url_for('recipePage', r_id=r_id))
 
 @app.route('/ingredient/<i_id>', methods = ["POST", "GET"])
 def ingredient(i_id):
   i = {}
   #ingredient name
   result = []
-  cursor = g.conn.execute("SELECT name, id FROM ingredients WHERE id = %s", (i_id))
+  cursor = g.conn.execute("SELECT * FROM ingredients WHERE id = %s", (i_id))
   result = cursor.fetchone()
   if result is None:
     return render_template("404.html")
@@ -421,39 +431,61 @@ def ingredient(i_id):
   return render_template("ingredient.html", **i)
   
 #add button
-@app.route('/addIngredient', methods = ['POST'])
-def addIngredient(ingredient_id):
-  return render_template("index.html")
-  #return redirect(url_for('index'))
-  '''if not (session['logged_in']):
+@app.route('/addIngredient/', methods = ['POST'])
+def addIngredient():
+  ingredient_id = int(request.args['ingredient_id'])
+  if not (session['logged_in']):
     flash('Please log in first')
+    return redirect(url_for('ingredient', i_id=ingredient_id))
   else:
     userID = session['userId']
     userName = session['username']
     sql = """
-    SELECT I.name
-    FROM ingredients I, user_grocery UG
-    WHERE I.id = UG.ingredient_id AND UG.ingredient_id = %s AND UG.user_id = %s
+    SELECT *
+    FROM user_grocery
+    WHERE ingredient_id = %s AND user_id = %s
     """
     cursor = g.conn.execute(sql, (ingredient_id, userID))
     ingredient = cursor.fetchone()
-    if ingredient is None:
-      sql = """
-        SELECT COUNT(*) FROM user_grocery;
-      """
-      cursor = g.conn.execute(sql)
-      count = cursor.fetchone().count + 1
-    
+    if ingredient is None:    
       sql = """
         INSERT INTO user_grocery VALUES 
-        (%s, %s, %s, )
+        (%s, %s, %s)
       """
       cursor = g.conn.execute(sql, (ingredient_id, userID, 1))
     else:
       flash('Ingredient is already in your list')
       
-    cursor.close()'''
-  
+    cursor.close()
+    return redirect(url_for('user', u_id=userID))
+
+@app.route('/favoriteRecipe/',methods = ['POST'])
+def favoriteRecipe():
+  recipe_id = int(request.args['recipe_id'])
+  if not (session['logged_in']):
+    flash('Please log in first')
+    return redirect(url_for('recipePage', r_id=recipe_id))
+  else:
+    userID = session['userId']
+    userName = session['username']
+    sql = """
+    SELECT *
+    FROM user_favorites
+    WHERE recipe_id = %s AND user_id = %s
+    """
+    cursor = g.conn.execute(sql, (recipe_id, userID))
+    recipe = cursor.fetchone()
+    if recipe is None:    
+      sql = """
+        INSERT INTO user_favorites VALUES 
+        (%s, %s)
+      """
+      cursor = g.conn.execute(sql, (recipe_id, userID))
+    else:
+      flash('Ingredient is already in your list')
+      
+    cursor.close()
+    return redirect(url_for('user', u_id=userID))
 
 
 if __name__ == "__main__":
