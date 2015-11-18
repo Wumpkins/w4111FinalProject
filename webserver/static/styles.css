@@ -1,11 +1,13 @@
 .noStyleLink{
-	text-align: center;
+
 }
 
 .noStyleLink a:link {
-    text-decoration: none;
+   text-decoration: none;
+   color:inherit;
 }
 
 .noStyleLink a:visited {
     text-decoration: none;
+    color:inherit;
 }
