@@ -17,6 +17,20 @@
   <br>
 
   <div>
+    Cuisine:  
+    {% for n in cuisine %}
+    {{n.name}} 
+    {% endfor %}
+  </div>
+  
+  <div>
+    Food Type:
+    {% for n in foodtype %}
+    {{n.name}} 
+    {% endfor %}
+  </div>
+  
+  <div>
     Estimated Price: {{price}}
   </div>
   
@@ -26,7 +40,7 @@
   <div>
     Ingredients:
     {% for n in ingred %}
-    <div>{{n}}</div>
+    <div>{{n.quantity}} {{n.measurement_type}} <a href = '/ingredient/{{n.id}}'>{{n.name}}</a></div>
     {% endfor %}
   </div>
   

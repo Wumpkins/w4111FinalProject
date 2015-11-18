@@ -232,20 +232,20 @@ def user(u_id):
   #grocery list
   grocery = []
   result = []
-  sql_list = """SELECT I.name
+  sql_list = """SELECT I.name, I.id
       FROM user_grocery UG, ingredients I
       WHERE UG.ingredient_id = I.id AND UG.user_id = %s"""
   cursor = g.conn.execute(sql_list, (u_id))
   for result in cursor:
     if result is not None:
-      grocery.append(result['name'])
+      grocery.append(result)
   u['grocery'] = grocery
   
   
   #ingredient suggestions
   suggestions=[]
   result = []
-  sql_sugg = """SELECT I.name
+  sql_sugg = """SELECT I.name, I.id
       FROM ingredients I, user_favorites UF, recipe_ingredients RI
       WHERE I.id = RI.ingredient_id AND UF.recipe_id = RI.recipe_id AND UF.user_id = %s AND I.id 
           NOT IN(SELECT I2.id
@@ -254,10 +254,8 @@ def user(u_id):
   cursor = g.conn.execute(sql_sugg, (u_id))
   for result in cursor:
     if result is not None:
-      suggestions.append(result['name'])
+      suggestions.append(result)
   u['sugg']=suggestions
-  #add ingredients to grocery list
-  
   
   #close
   print u
@@ -284,19 +282,38 @@ def recipePage(r_id):
     r['user']='Admin'
   
   #cuisine
+  cuisine=[]
   sql_cuisine = """SELECT C.name
         FROM cuisines C, recipe_cuisines RC
         WHERE RC.cuisine_id = C.id AND RC.recipe_id = %s"""
   cursor = g.conn.execute(sql_cuisine, r_id)
-  result = cursor.fetchone()
-  r['cuisine'] = result[0]
-  if r.get('cuisine') is None:
-    r['cuisine'] = "N/A"
+  result = []
+  for result in cursor:
+    if result is not None:
+      cuisine.append(result)
+  if cuisine == []:
+    cuisine.append("N/A")
+  r['cuisine'] = cuisine
+  
+  #foodtype
+  foodtype=[]
+  sql_foodtype = """SELECT F.name
+        FROM food_types F, recipe_food_type RF
+        WHERE RF.type_id = F.id AND RF.recipe_id = %s"""
+  cursor = g.conn.execute(sql_foodtype, r_id)
+  result = []
+  for result in cursor:
+    if result is not None:
+      foodtype.append(result)
+  if foodtype == []:
+    foodtype.append("N/A")
+  r['foodtype'] = foodtype
+  
   
   #ingredients
   ingred = []
   price = 0
-  sql_ingred = """SELECT I.name, RI.quantity, I.measurement_type, I.price
+  sql_ingred = """SELECT I.name, RI.quantity, I.measurement_type, I.price, I.id
         FROM ingredients I, recipe_ingredients RI
         WHERE RI.ingredient_id = I.id AND RI.recipe_id = %s;"""
   cursor = g.conn.execute(sql_ingred, (r_id))
@@ -304,7 +321,7 @@ def recipePage(r_id):
   for result in cursor:
     if result is not None:
       price += result[1]*result[3]
-      ingred.append(str(result[1])+" "+str(result[2])+" "+str(result[0]))
+      ingred.append(result)
   if ingred == [] :
     ingred.append("N/A")
   r['ingred'] = ingred
@@ -345,6 +362,55 @@ def recipePage(r_id):
   cursor.close()
   return render_template("recipePage.html", **r)
     
+
+@app.route('/ingredient/<i_id>', methods = ["POST", "GET"])
+def ingredient(i_id):
+  i = {}
+  #ingredient name
+  result = []
+  cursor = g.conn.execute("SELECT name, id FROM ingredients WHERE id = %s", (i_id))
+  result = cursor.fetchone()
+  if result is None:
+    return render_template("404.html")
+  i['ingredient'] = result
+  cursor.close()
+  return render_template("ingredient.html", **i)
+  
+#add button
+@app.route('/addIngredient', methods = ['POST'])
+def addIngredient(ingredient_id):
+  return render_template("index.html")
+  #return redirect(url_for('index'))
+  '''if not (session['logged_in']):
+    flash('Please log in first')
+  else:
+    userID = session['userId']
+    userName = session['username']
+    sql = """
+    SELECT I.name
+    FROM ingredients I, user_grocery UG
+    WHERE I.id = UG.ingredient_id AND UG.ingredient_id = %s AND UG.user_id = %s
+    """
+    cursor = g.conn.execute(sql, (ingredient_id, userID))
+    ingredient = cursor.fetchone()
+    if ingredient is None:
+      sql = """
+        SELECT COUNT(*) FROM user_grocery;
+      """
+      cursor = g.conn.execute(sql)
+      count = cursor.fetchone().count + 1
+    
+      sql = """
+        INSERT INTO user_grocery VALUES 
+        (%s, %s, %s, )
+      """
+      cursor = g.conn.execute(sql, (ingredient_id, userID, 1))
+    else:
+      flash('Ingredient is already in your list')
+      
+    cursor.close()'''
+  
+
 
 if __name__ == "__main__":
   import click
