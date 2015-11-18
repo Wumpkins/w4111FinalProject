@@ -155,19 +155,81 @@ def logout():
   flash('You were logged out')
   return redirect(url_for('index'))
 
-#User profile page
+#User profile page template
 @app.route('/user/<u_id>', methods = ["POST", "GET"])
 def user(u_id):
   result = []
   u = {}
   #user info
   cursor = g.conn.execute("SELECT U.username FROM users U WHERE U.id = %s", (u_id))
-  if cursor is None: 
-    return render_template("404.html")
   result = cursor.fetchone()
+  if result is None: 
+    return render_template("404.html")
   u['name'] = result['username']
   
-  return render_template('user.html', ** u)
+
+  #posted recipes
+  recipes = []
+  result = []
+  sql_recipes = """SELECT name, id FROM recipes WHERE user_posted = %s"""
+  cursor = g.conn.execute(sql_recipes, (u_id))
+  for result in cursor:
+    if result is not None:
+      recipes.append(result)
+  if cursor is None: 
+    recipes = [["N/A"]]
+  u['recipes'] = recipes
+  
+
+  #saved recipes
+  faves = []
+  result = []
+  sql_fave = """SELECT R.name, R.id
+      FROM user_favorites UF, recipes R
+      WHERE R.id = UF.recipe_id AND UF.user_id = %s"""
+  cursor = g.conn.execute(sql_fave,(u_id))
+  for result in cursor:
+    if result is not None:
+      faves.append(result)
+  if cursor is None: 
+    faves = [["N/A"]]
+  u['fave'] = faves
+  
+  
+  #grocery list
+  grocery = []
+  result = []
+  sql_list = """SELECT I.name
+      FROM user_grocery UG, ingredients I
+      WHERE UG.ingredient_id = I.id AND UG.user_id = %s"""
+  cursor = g.conn.execute(sql_list, (u_id))
+  for result in cursor:
+    if result is not None:
+      grocery.append(result['name'])
+  u['grocery'] = grocery
+  
+  
+  #ingredient suggestions
+  suggestions=[]
+  result = []
+  sql_sugg = """SELECT I.name
+      FROM ingredients I, user_favorites UF, recipe_ingredients RI
+      WHERE I.id = RI.ingredient_id AND UF.recipe_id = RI.recipe_id AND UF.user_id = %s AND I.id 
+          NOT IN(SELECT I2.id
+                FROM user_grocery UF, ingredients I2
+                WHERE I2.id = UF.ingredient_id)"""
+  cursor = g.conn.execute(sql_sugg, (u_id))
+  for result in cursor:
+    if result is not None:
+      suggestions.append(result['name'])
+  u['sugg']=suggestions
+  #add ingredients to grocery list
+  
+  
+  #close
+  print u
+  cursor.close()
+  return render_template('user.html', **u)
 
 # Recipe Page Template
 @app.route('/recipePage/<r_id>', methods = ["POST", "GET"])
@@ -193,8 +255,8 @@ def recipePage(r_id):
         FROM cuisines C, recipe_cuisines RC
         WHERE RC.cuisine_id = C.id AND RC.recipe_id = %s"""
   cursor = g.conn.execute(sql_cuisine, r_id)
-  result = cursor.fetchone();
-  r['cuisine'] = result[0];
+  result = cursor.fetchone()
+  r['cuisine'] = result[0]
   if r.get('cuisine') is None:
     r['cuisine'] = "N/A"
   
